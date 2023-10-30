@@ -34,9 +34,13 @@ io.on('connection', socket => {
 ExpressPeerServer(http, { path: '/' })
 */
  
+// Router 
+const AuthRouter = require("./Router/UserRoute");
+app.use('/api/auth', AuthRouter);
 
-const port = process.env.PORT || 5000
+const port = process.env.PORT || 2000
 app.listen(port, () => {
-    // console.log('Server is running on port', port).bgBlue.white
-    `Server Running in ${process.env.NODE_MODE} Mode on port ${port}`.bgBlue.white
+    const bgPort = port.bgRed
+    const mode = process.env.NODE_MODE_DEV.magenta
+    console.log(`Server Running in ${mode} Mode on port: ${bgPort}`.bgBlue)
 })
