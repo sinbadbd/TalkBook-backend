@@ -35,7 +35,7 @@ ExpressPeerServer(http, { path: '/' })
 */
  
 // Router 
-const AuthRouter = require("./Router/UserRoute");
+const AuthRouter = require("./Router/AuthRouter");
 app.use('/api/auth', AuthRouter);
 
 const port = process.env.PORT || 2000

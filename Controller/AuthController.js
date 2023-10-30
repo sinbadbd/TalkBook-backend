@@ -1,6 +1,6 @@
 const Users = require('../Model/User');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken'); 
+const jwt = require('jsonwebtoken');
 const validator = require('email-validator');
 
 const register = async (req, res) => {
@@ -31,7 +31,7 @@ const register = async (req, res) => {
             })
         }
 
-        if (!username || username.trim() === "" || username.length < 6 ) {
+        if (!username || username.trim() === "" || username.length < 6) {
             errors.username = "Username is required must be at least 6 characters";
         }
 
@@ -97,7 +97,57 @@ const register = async (req, res) => {
         });
     }
 }
-const login = async (req, res) => { }
+
+const login = async (req, res) => {
+    try {
+        const { email, password } = req.body
+        const user = await Users.findOne({ email })
+        //.populate("followers following", "avatar username fullname followers following")
+
+        if (!user) {
+            return res.status(400).send({
+                code: 400,
+                success: false,
+                message: "This email does not exist.",
+            })
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password)
+        if (!isMatch) {
+            return res.status(400).send({
+                code: 400,
+                success: false,
+                message: "Password is incorrect.",
+            })
+        }
+        const access_token = createAccessToken({ id: user._id })
+        const refresh_token = createRefreshToken({ id: user._id })
+
+        res.cookie('refreshtoken', refresh_token, {
+            httpOnly: true,
+            path: '/api/refresh_token',
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30days
+        })
+
+        return res.status(200).send({
+            code: 200,
+            success: true,
+            message: "Login successful",
+            access_token,
+            user: {
+                ...user._doc,
+                password: ''
+            }
+        })
+    } catch (error) {
+        return res.status(500).send({
+            code: 400,
+            success: false,
+            message: "Something went wrong! Please try again!",
+            error: error.message
+        });
+    }
+}
 const logout = async (req, res) => { }
 const generateAccessToken = async (req, res) => { }
 
