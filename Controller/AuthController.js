@@ -148,7 +148,23 @@ const login = async (req, res) => {
         });
     }
 }
-const logout = async (req, res) => { }
+const logout = async (req, res) => {
+    try {
+        res.clearCookie('refreshtoken', { path: '/api/refresh_token' })
+        return res.status(200).send({
+            code: 200,
+            success: true,
+            message: "Login successfull",
+        });
+    } catch (error) {
+        return res.status(500).send({
+            code: 500,
+            success: false,
+            message: "Something went wrong! Please try again!",
+            error: error.message
+        });
+    }
+}
 const generateAccessToken = async (req, res) => { }
 
 
