@@ -8,6 +8,7 @@ const cookieParser = require('cookie-parser')
 const path = require('path')
 const morgan = require("morgan");
 const colors = require("colors");
+var bodyParser = require('body-parser')
 const connectDB = require("./Config/db");
 
 const app = express()
@@ -15,6 +16,7 @@ app.use(express.json())
 app.use(cors())
 app.use(cookieParser())
 app.use(morgan('dev'));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 //dotenv conig
 dotenv.config();

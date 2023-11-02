@@ -14,7 +14,7 @@ const createPost = async (req, res) => {
         // }
 
         const newPost = new Posts({
-            content, images//, user: req.user._id
+            content, images, user: req.user._id
         })
         await newPost.save()
 
@@ -25,7 +25,7 @@ const createPost = async (req, res) => {
             success: true,
             message: "Created post successfully",
             newPost: {
-                ...newPost._doc,
+                ...newPost._doc
                 //user: req.user
             }
         })
