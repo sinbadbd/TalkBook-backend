@@ -76,80 +76,63 @@ const createPost = async (req, res) => {
 }
 
 const getPosts = async (req, res) => {
-   // try {
-        // const userId = req.params.id
-       //const userId = req.userId;
-      // const currentUserPosts = await Posts.find({ userId: userId })
-
-        
-        //654464b208a9671957c1672d
-        // const userId = req.userId; // Ensure req.user._id is correct
-        // const { userId } = req.body
-        // console.log("userId:", userId);
-
-   
-
-        // const features = new APIfeatures(Posts.find({
-        //     user: [ userId]
-        // }), req.query).paginating()
-
-        // // const posts = await Posts.find({})
-        // const posts = await features.query.sort('-createdAt')
-
-        //     .populate("user likes", "avatar username fullname followers")
-        //     .populate({
-        //         path: "comments",
-        //         populate: {
-        //             path: "user likes",
-        //             select: "-password"
-        //         }
-        //     })
-        // console.log("Populated Posts:", posts);
-        // console.log("Populated Posts:", features);
-        // res.json({
-        //     message: 'Success!',
-        //     result: posts.length,
-        //     posts
-        // })
-
-
-        const userId = req.params.id
     try {
-        const currentUserPosts = await Posts.find({ userId: userId })
-        const followingPosts = await User.aggregate(
 
-            [
+        const features = new APIfeatures(Posts.find({
+            user: [...req.user.following ?? [], req.user._id]
+        }), req.query).paginating()
 
-                {
-                    $match: {
-                        _id: new mongoose.Types.ObjectId(userId),
-                    },
-                },
-                {
-                    $lookup: {
-                        from: "post",
-                        localField: "following",
-                        foreignField: "userId",
-                        as: "followingPosts",
-                    },
-                },
-                {
-                    $project: {
-                        followingPosts: 1,
-                        _id: 0,
-                    },
-                },
-            ]
-        )
-        res.status(200).send({
+        const posts = await Posts.find({})
+            // const posts = await features.query.sort('-createdAt') // Need to fixed 
+            .populate("user likes", "avatar username fullname followers")
+            .populate({
+                path: "comments",
+                populate: {
+                    path: "user likes",
+                    select: "-password"
+                }
+            })
+        res.json({
             success: true,
-            message: "Post successfully",
-            timeLinePosts: currentUserPosts.concat(...followingPosts[0].followingPosts)
-                .sort((a, b) => {
-                    return b.createdAt - a.createdAt;
-                })
-        });
+            message: 'Success!',
+            result: posts.length,
+            posts
+        })
 
+    } catch (error) {
+        console.log(error)
+        return res.status(500).send({
+            code: 500,
+            success: false,
+            message: "Something went wrong! Please try again!",
+            error: error.message
+        })
+    }
+}
+
+const updatePost = async (req, res) => { 
+    try {
+        const { postContent, images } = req.body
+        const post = await Posts.findOneAndUpdate({ _id: req.params.id }, {
+            postContent, images 
+        }).populate("user likes", "avatar username fullname")
+        .populate({
+            path: "comments",
+            populate: {
+                path: "user likes",
+                select: "-password"
+            }
+        })
+
+        res.json({
+            code: 200,
+            success: true,
+            message: "Updated Post!",
+            newPost: {
+                ...post,
+                postContent, images
+            }
+        })
     } catch (error) {
         console.log(error)
         return res.status(500).send({
@@ -163,5 +146,6 @@ const getPosts = async (req, res) => {
 
 module.exports = {
     createPost,
-    getPosts
+    getPosts,
+    updatePost
 }
