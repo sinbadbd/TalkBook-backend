@@ -26,11 +26,11 @@ const createPost = async (req, res) => {
         const errors = {};
 
         if (!postContent || postContent.trim() === "") {
-            postContent.content = "content is required";
+            errors.content = "content is required";
         }
 
-        if (!userId || userId.trim() === "") {
-            userId.content = "userId is required";
+        if (!userId) {
+            errors.content = "userId is required";
         }
 
         if (Object.keys(errors).length > 0) {
@@ -83,6 +83,7 @@ const getPosts = async (req, res) => {
         }), req.query).paginating()
 
         const posts = await Posts.find({})
+        .sort("-createdAt")
             // const posts = await features.query.sort('-createdAt') // Need to fixed 
             .populate("user likes", "avatar username fullname followers")
             .populate({
