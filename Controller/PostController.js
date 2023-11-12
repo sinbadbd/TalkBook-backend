@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Posts = require('../Model/Post');
 const Comment = require('../Model/Comment');
 const User = require('../Model/User');
+const validateMongoDbId = require('../Utils/validateMongodbId');
 
 class APIfeatures {
     constructor(query, queryString) {
@@ -83,7 +84,7 @@ const getPosts = async (req, res) => {
         }), req.query).paginating()
 
         const posts = await Posts.find({})
-        .sort("-createdAt")
+            .sort("-createdAt")
             // const posts = await features.query.sort('-createdAt') // Need to fixed 
             .populate("user likes", "avatar username fullname followers")
             .populate({
@@ -111,26 +112,27 @@ const getPosts = async (req, res) => {
     }
 }
 
-const updatePost = async (req, res) => { 
+const updatePost = async (req, res) => {
     try {
         const { postContent, images } = req.body
-        const post = await Posts.findOneAndUpdate({ _id: req.params.id }, {
-            postContent, images 
-        }).populate("user likes", "avatar username fullname")
-        .populate({
-            path: "comments",
-            populate: {
-                path: "user likes",
-                select: "-password"
-            }
+        const posts = await Posts.findOneAndUpdate({ _id: req.params.id }, {
+            postContent, images
         })
-
+            .populate("user likes", "avatar username fullname")
+            .populate({
+                path: "comments",
+                populate: {
+                    path: "user likes",
+                    select: "-password"
+                }
+            })
+        console.log("posts-upate", posts)
         res.json({
             code: 200,
             success: true,
             message: "Updated Post!",
-            newPost: {
-                ...post,
+            posts: {
+                ...posts._doc,
                 postContent, images
             }
         })
@@ -145,8 +147,187 @@ const updatePost = async (req, res) => {
     }
 }
 
+const likePost = async (req, res) => {
+    try {
+        const { userId } = req.body;
+        validateMongoDbId(userId);
+    
+        const post = await Posts.findOne({ _id: req.params.id, 'likes.userId': userId });
+    
+        if (post) {
+            return res.status(400).json({
+                code: 400,
+                success: false,
+                message: "You already liked this post."
+            });
+        }
+    
+        // Update the post to add the user's like
+        const updatedPost = await Posts.findOneAndUpdate(
+            { _id: req.params.id },
+            {
+                $push: { likes: { userId: userId, liked: true } },
+            },
+            { new: true }
+        );
+    
+        if (!updatedPost) {
+            return res.status(400).json({
+                code: 400,
+                success: false,
+                message: 'This post does not exist.'
+            });
+        }
+    
+        console.log("updatedPost:", updatedPost);
+        res.json({
+            code: 200,
+            success: true,
+            message: "You liked this post.",
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            code: 500,
+            success: false,
+            message: "Something went wrong! Please try again!",
+            error: error.message
+        });
+    }
+    
+};
+
+
+const unLikePost = async (req, res) => {
+    try {
+
+
+         const { userId } = req.body
+         validateMongoDbId(userId)
+
+        // const post = await Posts.findOne({ _id: req.params.id });
+
+        // console.log("post:", post);
+        // if (post) {
+        //     return res.status(400).json({
+        //         code: 400,
+        //         success: false,
+        //         message: "You already Unliked this post."
+        //     });
+        // }
+
+        // Update the post to add the user's like
+        const updatedPost = await Posts.findOneAndUpdate(
+            { _id: req.params.id },
+            {
+                $pull: { likes: userId },
+                $set: { liked: false}
+                // $push: { likes: { user: userId, liked: true } },
+            },
+            { new: true }
+        )
+
+        if (!updatedPost) {
+            return res.status(400).json({
+                code: 400,
+                success: false,
+                message: 'This post does not exist.'
+            });
+        }
+        console.log("updatedPost:", updatedPost);
+
+        res.json({
+            code: 200,
+            success: true,
+            message: "You Unliked this post.",
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            code: 500,
+            success: false,
+            message: "Something went wrong! Please try again!",
+            error: error.message
+        });
+    }
+};
+
+const toggleLikePost = async (req, res) => {
+    try {
+        const { userId } = req.body;
+        validateMongoDbId(userId);
+
+        const post = await Posts.findOne({ _id: req.params.id, 'likes.user': userId });
+
+        if (post) {
+            // User has already liked the post, so unliking it
+            const updatedPost = await Posts.findOneAndUpdate(
+                { _id: req.params.id },
+                {
+                    $push: { likes: { user: userId, liked: true } },
+                    //$set: { liked: false },
+                },
+                { new: true }
+            );
+
+            if (!updatedPost) {
+                return res.status(400).json({
+                    code: 400,
+                    success: false,
+                    message: 'This post does not exist.'
+                });
+            }
+
+            console.log("updatedPost:", updatedPost);
+
+            res.json({
+                code: 200,
+                success: true,
+                message: "You unliked this post.",
+            });
+        } else {
+            // User has not liked the post, so liking it
+            const updatedPost = await Posts.findOneAndUpdate(
+                { _id: req.params.id },
+                {
+                    $push: { likes: { userId: userId, liked: true } },
+                    //$set: { liked: true },
+                },
+                { new: true }
+            );
+
+            if (!updatedPost) {
+                return res.status(400).json({
+                    code: 400,
+                    success: false,
+                    message: 'This post does not exist.'
+                });
+            }
+
+            console.log("updatedPost:", updatedPost);
+
+            res.json({
+                code: 200,
+                success: true,
+                message: "You liked this post.",
+            });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            code: 500,
+            success: false,
+            message: "Something went wrong! Please try again!",
+            error: error.message
+        });
+    }
+};
+ 
 module.exports = {
     createPost,
     getPosts,
-    updatePost
+    updatePost,
+    likePost,
+    unLikePost,
+    toggleLikePost
 }
