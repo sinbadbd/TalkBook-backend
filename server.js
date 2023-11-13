@@ -41,7 +41,7 @@ const AuthRouter = require("./Router/AuthRouter");
 const PostRouter = require("./Router/PostRouter");
 
 app.use('/api/auth', AuthRouter);
-app.use('/api/post', PostRouter);
+app.use('/api', PostRouter);
 
 const port = process.env.PORT || 2000
 app.listen(port, () => {
