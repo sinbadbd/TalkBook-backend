@@ -323,8 +323,42 @@ const toggleLikePost = async (req, res) => {
     }
 };
 
-const getPost = (req, res) => { 
-    
+const getPost = async (req, res) => { 
+    try {
+        const post = await Posts.findById(req.params.id)
+        .populate("user likes", "avatar username fullname followers")
+        .populate({
+            path: "comments",
+            populate: {
+                path: "user likes",
+                select: "-password"
+            }
+        })
+
+        if (!post) {
+            return res.status(400).json({ 
+                code: 400,
+                success: false,
+                 message: 'This post does not exist.'
+            })
+        }
+
+        res.json({
+            code: 200,
+            success: true,
+            message: "Success",
+            post
+            
+        })
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            code: 500,
+            success: false,
+            message: "Something went wrong! Please try again!",
+            error: error.message
+        });
+    }
 }
  
 module.exports = {
