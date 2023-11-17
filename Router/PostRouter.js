@@ -6,7 +6,8 @@ const {
     updatePost,
     likePost,
     unLikePost,
-    toggleLikePost
+    toggleLikePost,
+    getPost
 } = require('../Controller/PostController');
 const authMiddleware = require('../Middleware/AuthMiddleware');
 
@@ -16,7 +17,7 @@ router.put('/post/:id', authMiddleware, updatePost);
 router.put('/post/:id/like', authMiddleware, likePost);
 router.put('/post/:id/unlike', authMiddleware, unLikePost);
 router.put('/post/:id/toggleLikePost', authMiddleware, toggleLikePost);
-
+router.get('/post/:id', authMiddleware, getPost);
 module.exports = router
 
 //:id/like
