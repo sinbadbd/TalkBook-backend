@@ -323,7 +323,9 @@ const toggleLikePost = async (req, res) => {
     }
 };
 
-const getPost = (req, res) => { }
+const getPost = (req, res) => { 
+    
+}
  
 module.exports = {
     createPost,
