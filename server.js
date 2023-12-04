@@ -39,9 +39,11 @@ ExpressPeerServer(http, { path: '/' })
 // Router 
 const AuthRouter = require("./Router/AuthRouter");
 const PostRouter = require("./Router/PostRouter");
+const CommentRouter = require("./Router/CommentRouter");
 
 app.use('/api/auth', AuthRouter);
 app.use('/api', PostRouter);
+app.use('/api', CommentRouter);
 
 const port = process.env.PORT || 2000
 app.listen(port, () => {
