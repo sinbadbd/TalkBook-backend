@@ -4,6 +4,6 @@ const authMiddleware = require('../Middleware/AuthMiddleware');
 
 const { createComment} = require('../Controller/CommentController');
 
-router.post('comments', authMiddleware, createComment)
+router.post('/createComment', authMiddleware, createComment)
 
 module.exports = router

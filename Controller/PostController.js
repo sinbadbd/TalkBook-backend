@@ -88,7 +88,7 @@ const getPosts = async (req, res) => {
             // const posts = await features.query.sort('-createdAt') // Need to fixed 
             .populate("user likes", "avatar username fullname followers")
             .populate({
-                path: "comments",
+                path: "comment",
                 populate: {
                     path: "user likes",
                     select: "-password"
@@ -120,7 +120,7 @@ const updatePost = async (req, res) => {
         })
             .populate("user likes", "avatar username fullname")
             .populate({
-                path: "comments",
+                path: "comment",
                 populate: {
                     path: "user likes",
                     select: "-password"
@@ -328,7 +328,7 @@ const getPost = async (req, res) => {
         const post = await Posts.findById(req.params.id)
         .populate("user likes", "avatar username fullname followers")
         .populate({
-            path: "comments",
+            path: "comment",
             populate: {
                 path: "user likes",
                 select: "-password"
