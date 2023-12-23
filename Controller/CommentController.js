@@ -16,21 +16,22 @@ const createComment = async (req, res) => {
                 message: "This post does not exist."
             })
         }
-        // if (reply) {
-        //     const cm = await Comment.findById(reply)
-        //     if (!cm) {
-        //         return res.status(400).send({
-        //             code: 400,
-        //             success: false,
-        //             message: "This comment does't exist."
-        //         })
-        //     }
-        // }
+        /*
+        if (reply) {
+            const cm = await Comment.findById(reply)
+            if (!cm) {
+                return res.status(400).send({
+                    code: 400,
+                    success: false,
+                    message: "This comment does't exist."
+                })
+            }
+        }*/
         const newComment = new Comment({
             user: req.user._id, content, tag, reply, postUserId, postId
         })
         await Post.findOneAndUpdate({ _id: postId }, {
-            $push: { comments: newComment._id}
+             $push: { comments: newComment._id } 
         }, { new: true })
         await newComment.save()
 
@@ -50,6 +51,84 @@ const createComment = async (req, res) => {
     }
 }
 
+const getComments = async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id)
+            .populate("user likes", "avatar username fullname followers");
+
+        if (!post) {
+            return res.status(400).json({
+                code: 400,
+                success: false,
+                message: 'This post does not exist.'
+            });
+        }
+
+        // Assuming Comment is the model for comments
+        let comments = await Comment.find({ postId: req.params.id })
+            .populate("user likes", "avatar username fullname followers");
+
+        // Append user object from the post to each comment
+        comments = comments.map(comment => {
+            return {
+                ...comment.toObject(),
+                user: post.user.toObject() // Add the user object from the post
+            };
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Comments retrieved successfully.",
+            comments: comments,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            code: 500,
+            success: false,
+            message: "Something went wrong! Please try again!",
+            error: error.message,
+        });
+    }
+};
+
+
+// const getComments = async (req, res) => {
+//     try {
+//         const post = await Post.findById(req.params.id)
+//             .populate("user likes", "avatar username fullname followers");
+
+//         if (!post) {
+//             return res.status(400).json({
+//                 code: 400,
+//                 success: false,
+//                 message: 'This post does not exist.'
+//             });
+//         }
+
+//         // Assuming Comment is the model for comments
+//         const comments = await Comment.find({ postId: req.params.id, userId: req.params.postUserId })
+//             .populate("user likes", "avatar username fullname followers");
+
+//         return res.status(200).json({
+//             success: true,
+//             message: "Comments retrieved successfully.",
+//             post: post,
+//             comments: comments,
+//         });
+//     } catch (error) {
+//         console.error(error);
+//         return res.status(500).json({
+//             code: 500,
+//             success: false,
+//             message: "Something went wrong! Please try again!",
+//             error: error.message,
+//         });
+//     }
+// };
+
+
 module.exports = {
-    createComment
+    createComment,
+    getComments
 }
