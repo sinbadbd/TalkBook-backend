@@ -54,7 +54,7 @@ const createComment = async (req, res) => {
 const getComments = async (req, res) => {
     try {
         const post = await Post.findById(req.params.id)
-            .populate("user likes", "avatar username fullname followers");
+            .populate("user", "avatar username");
 
         if (!post) {
             return res.status(400).json({
@@ -65,21 +65,30 @@ const getComments = async (req, res) => {
         }
 
         // Assuming Comment is the model for comments
-        let comments = await Comment.find({ postId: req.params.id })
-            .populate("user likes", "avatar username fullname followers");
+        const comments = await Comment.find({ postId: req.params.id })
+            .populate("user", "avatar username");
 
-        // Append user object from the post to each comment
-        comments = comments.map(comment => {
+        // Fetch user details for each comment based on postUserId
+        const enrichedComments = await Promise.all(comments.map(async comment => {
+            const user = await User.findById(comment.postUserId)
+                .select("avatar username fullname");
             return {
                 ...comment.toObject(),
-                user: post.user.toObject() // Add the user object from the post
+                user: user ? user.toObject() : null,
             };
-        });
+        }));
+/*
+// also works
+  for (const comment of comments) {
+            const user = await User.findById(comment.postUserId).select("avatar username fullname").lean();
+            comment.user = user || null;
+        }
 
+*/
         return res.status(200).json({
             success: true,
             message: "Comments retrieved successfully.",
-            comments: comments,
+            comments: enrichedComments,
         });
     } catch (error) {
         console.error(error);
@@ -91,6 +100,7 @@ const getComments = async (req, res) => {
         });
     }
 };
+
 
 
 // const getComments = async (req, res) => {
