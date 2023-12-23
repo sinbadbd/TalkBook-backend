@@ -339,7 +339,7 @@ const getPost = async (req, res) => {
             return res.status(400).json({ 
                 code: 400,
                 success: false,
-                 message: 'This post does not exist.'
+                message: 'This post does not exist.'
             })
         }
 
