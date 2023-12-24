@@ -31,7 +31,7 @@ const createComment = async (req, res) => {
             user: req.user._id, content, tag, reply, postUserId, postId
         })
         await Post.findOneAndUpdate({ _id: postId }, {
-             $push: { comments: newComment._id } 
+            $push: { comments: newComment._id }
         }, { new: true })
         await newComment.save()
 
@@ -77,14 +77,7 @@ const getComments = async (req, res) => {
                 user: user ? user.toObject() : null,
             };
         }));
-/*
-// also works
-  for (const comment of comments) {
-            const user = await User.findById(comment.postUserId).select("avatar username fullname").lean();
-            comment.user = user || null;
-        }
 
-*/
         return res.status(200).json({
             success: true,
             message: "Comments retrieved successfully.",
@@ -101,44 +94,94 @@ const getComments = async (req, res) => {
     }
 };
 
+const updateComment = async (req, res) => {
+    try {
+        const { content } = req.body
+        await Comment.findOneAndUpdate({
+            _id: req.params.id, user: req.user._id,
+        }, { content })
+        return res.status(200).json({
+            success: true,
+            message: "Comment  Updated Successfully",
+            // comments: comments,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            code: 500,
+            success: false,
+            message: "Something went wrong! Please try again!",
+            error: error.message,
+        });
+    }
+}
 
+const likeComment = async (req, res) => {
+    try {
+        const { userId } = req.body
 
-// const getComments = async (req, res) => {
-//     try {
-//         const post = await Post.findById(req.params.id)
-//             .populate("user likes", "avatar username fullname followers");
+        const comment = await Comment.findOne({ _id: req.params.id, likes: userId })
 
-//         if (!post) {
-//             return res.status(400).json({
-//                 code: 400,
-//                 success: false,
-//                 message: 'This post does not exist.'
-//             });
-//         }
+        if (comment) {
+            return res.status(400).json({
+                success: false,
+                message: "You already liked this comment",
+            });
+        }
+        await Comment.findOneAndUpdate({ _id: req.params.id }, {
+            $push: { likes: userId }
+        }, { new: true })
 
-//         // Assuming Comment is the model for comments
-//         const comments = await Comment.find({ postId: req.params.id, userId: req.params.postUserId })
-//             .populate("user likes", "avatar username fullname followers");
+        return res.status(200).json({
+            success: true,
+            message: "Like comment successfully",
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            code: 500,
+            success: false,
+            message: "Something went wrong! Please try again!",
+            error: error.message,
+        });
+    }
+}
 
-//         return res.status(200).json({
-//             success: true,
-//             message: "Comments retrieved successfully.",
-//             post: post,
-//             comments: comments,
-//         });
-//     } catch (error) {
-//         console.error(error);
-//         return res.status(500).json({
-//             code: 500,
-//             success: false,
-//             message: "Something went wrong! Please try again!",
-//             error: error.message,
-//         });
-//     }
-// };
+const unlikeComment = async (req, res) => {
+    try {
+        const { userId } = req.body
 
+        // const comment = await Comment.findOne({ _id: req.params.id, likes: userId })
+
+        // if (comment) {
+        //     return res.status(400).json({
+        //         success: false,
+        //         message: "You already liked this comment",
+        //     });
+        // }
+        await Comment.findOneAndUpdate({ _id: req.params.id }, {
+            $pull: { likes: userId }
+        }, { new: true })
+
+        return res.status(200).json({
+            success: true,
+            message: "UnLike comment successfully",
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            code: 500,
+            success: false,
+            message: "Something went wrong! Please try again!",
+            error: error.message,
+        });
+    }
+}
 
 module.exports = {
     createComment,
-    getComments
+    getComments,
+    updateComment,
+    likeComment,
+    unlikeComment
 }
