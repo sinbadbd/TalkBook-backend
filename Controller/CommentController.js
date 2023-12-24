@@ -151,14 +151,6 @@ const unlikeComment = async (req, res) => {
     try {
         const { userId } = req.body
 
-        // const comment = await Comment.findOne({ _id: req.params.id, likes: userId })
-
-        // if (comment) {
-        //     return res.status(400).json({
-        //         success: false,
-        //         message: "You already liked this comment",
-        //     });
-        // }
         await Comment.findOneAndUpdate({ _id: req.params.id }, {
             $pull: { likes: userId }
         }, { new: true })
@@ -178,10 +170,43 @@ const unlikeComment = async (req, res) => {
     }
 }
 
+const deleteComment = async (req, res) => {
+    try {
+
+        const { userId } = req.body
+
+        const comment = await Comment.findOneAndDelete(
+            { _id: req.params.id,
+            $or: [
+                {user: userId},
+                {postUserId: userId}
+            ]
+        })
+
+        await Post.findOneAndUpdate({ _id: comment.postId }, {
+            $pull: { comments: req.params.id }
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Deleted Comment!",
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            code: 500,
+            success: false,
+            message: "Something went wrong! Please try again!",
+            error: error.message,
+        });
+    }
+}
 module.exports = {
     createComment,
     getComments,
     updateComment,
     likeComment,
-    unlikeComment
+    unlikeComment,
+    deleteComment
 }
