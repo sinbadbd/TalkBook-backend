@@ -1,9 +1,26 @@
 const User = require('../Model/User');
 
-const getUser = (req, res) => {
+const getUser = async(req, res) => {
     try {
 
-        console.log("Loading")
+        const user = await User.findById(req.params.id).select("-password")
+            .populate("followers following", "-password")
+        
+        if (!user) {
+            res.status(404).send({
+                code: 404,
+                success: false,
+                message: "failld",
+            })
+        }
+
+        res.status(200).send({
+            code: 200,
+            success: true,
+            message: "Success",
+            user: user
+        })
+
         
     } catch (error) {
         console.log(error)
