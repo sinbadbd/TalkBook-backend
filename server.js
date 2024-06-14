@@ -50,5 +50,5 @@ const port = process.env.PORT || 2000
 app.listen(port, () => {
     const bgPort = port.bgRed
     const mode = process.env.NODE_MODE_DEV.magenta
-    console.log(`Server Running in ${mode} Mode on port: ${bgPort}`.bgBlue)
+    console.log(`Talkbook Server Running in ${mode} Mode on port: ${bgPort}`.bgBlue)
 })
